@@ -1,2 +1,77 @@
-/* Extra anniversary features */
-.countdown{margin:22px auto 0;display:flex;flex-direction:column;gap:4px;width:max-content;padding:11px 22px;border:1px solid #f2afd544;border-radius:16px;background:#ffffff0b;color:#e9c1e1;font-size:.7rem}.countdown strong{color:#ffc0dc;text-transform:uppercase;letter-spacing:.14em;font-size:.58rem}.photo-section,.surprise-panel,.music-card{margin:70px 0;text-align:center}.photo-section h2,.surprise-panel h2,.music-card h2{font:600 clamp(2rem,5vw,3rem) 'Cormorant Garamond',serif;margin:8px 0 25px}.photo-grid{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:15px;max-width:850px;margin:auto}.memory-card{position:relative;min-height:235px;padding:0;border:0;overflow:hidden;border-radius:16px;cursor:pointer;background:#40204f;box-shadow:0 12px 35px #12081d66;transition:.35s}.memory-card.tall{min-height:300px}.memory-card:hover{transform:translateY(-8px) rotate(1deg);box-shadow:0 20px 45px #0d061388}.memory-card img{width:100%;height:100%;object-fit:cover;display:block;opacity:.84;transition:.5s}.memory-card:hover img{transform:scale(1.08);opacity:1}.memory-card span{position:absolute;bottom:0;left:0;right:0;padding:22px 10px 13px;background:linear-gradient(transparent,#1c0b2ccc);color:#fff;font:600 1.15rem 'Cormorant Garamond',serif}.photo-tip{font-size:.7rem;color:#bf9abf;margin-top:18px}.surprise-buttons{display:flex;justify-content:center;flex-wrap:wrap;gap:12px}.surprise-btn{border:1px solid #e9a9d655;background:#ffffff10;color:#f9d8eb;border-radius:30px;padding:12px 17px;cursor:pointer;transition:.25s}.surprise-btn:hover{background:#d66eaa55;transform:translateY(-3px)}.surprise-result{min-height:34px;margin:20px auto 0;max-width:600px;color:#ffc4dd;font:600 1.35rem 'Cormorant Garamond',serif}.music-card{display:flex;align-items:center;justify-content:space-between;text-align:left;gap:25px;padding:25px;border:1px solid #e3b1db33;border-radius:22px;background:#ffffff0c}.music-card p:not(.eyebrow){color:#d3b8d4;font-size:.82rem}.music-card .love-button{white-space:nowrap}.music-card iframe{display:none}.photo-lightbox{position:fixed;inset:0;z-index:40;display:none;place-items:center;background:#10051bdd;backdrop-filter:blur(10px);padding:25px}.photo-lightbox.show{display:grid}.photo-lightbox img{max-width:min(900px,94vw);max-height:88vh;border-radius:12px;box-shadow:0 20px 80px #000}.photo-lightbox button{position:absolute;right:25px;top:15px;background:none;color:#fff;border:0;font-size:2.5rem;cursor:pointer}@media(max-width:650px){.photo-grid{grid-template-columns:1fr 1fr}.memory-card.tall{min-height:235px}.music-card{flex-direction:column;text-align:center}.countdown{font-size:.65rem}}
+// Extra interactive surprises, music, memories, and voice-message feature.
+const youtubePlay = document.getElementById('youtubePlay');
+const youtubePlayer = document.getElementById('youtubePlayer');
+let songPlaying = false;
+if (youtubePlay && youtubePlayer) {
+  youtubePlay.addEventListener('click', () => {
+    songPlaying = !songPlaying;
+    youtubePlayer.contentWindow.postMessage(JSON.stringify({ event: 'command', func: songPlaying ? 'playVideo' : 'pauseVideo', args: [] }), '*');
+    youtubePlay.textContent = songPlaying ? 'pause our song ♫' : 'play our song ♫';
+  });
+}
+
+const surprises = {
+  wish: 'Close your eyes and make a wish. Mine already came true when I found you. ✨',
+  reasons: 'I love your heart, your smile, your effort, your patience, and the way you make ordinary moments feel special. 💜',
+  kiss: 'Mwaaaaa! A pocketful of kisses is flying to you right now. 💋💋💋'
+};
+
+document.querySelectorAll('.surprise-btn').forEach(button => button.addEventListener('click', () => {
+  document.getElementById('surpriseResult').textContent = surprises[button.dataset.surprise];
+  if (typeof hearts === 'function') hearts(20);
+}));
+
+document.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => {
+  document.getElementById('lightboxImage').src = card.dataset.photo;
+  document.getElementById('photoLightbox').classList.add('show');
+}));
+const closePhoto = document.getElementById('closePhoto');
+if (closePhoto) closePhoto.addEventListener('click', () => document.getElementById('photoLightbox').classList.remove('show'));
+const photoLightbox = document.getElementById('photoLightbox');
+if (photoLightbox) photoLightbox.addEventListener('click', event => { if (event.target.id === 'photoLightbox') event.currentTarget.classList.remove('show'); });
+
+const startDate = new Date('2024-09-25T00:00:00');
+const days = Math.max(0, Math.floor((Date.now() - startDate) / 86400000));
+const loveCounter = document.querySelector('#loveCounter span');
+if (loveCounter) loveCounter.textContent = `${days.toLocaleString()} beautiful days together and counting ♡`;
+
+// Voice message feature:
+// - if assets/voice-message.mp3 exists, it will play automatically.
+// - if not, the file picker lets you preview a local recording from the phone.
+const voiceCard = document.createElement('section');
+voiceCard.className = 'voice-card';
+voiceCard.innerHTML = `
+  <div class="voice-icon">🎙️</div>
+  <div class="voice-copy">
+    <p class="eyebrow">a message from my voice</p>
+    <h2>Press play when you miss me</h2>
+    <p>Your special voice message is waiting here, langga. 💜</p>
+  </div>
+  <audio id="voiceMessage" controls preload="metadata">
+    <source src="assets/voice-message.mp3" type="audio/mpeg" />
+    Your browser does not support audio playback.
+  </audio>
+  <label class="voice-upload" for="voiceUpload">preview a recording from this phone</label>
+  <input id="voiceUpload" type="file" accept="audio/*" hidden>
+  <p class="voice-status" id="voiceStatus">Upload your recording to the repository as <b>assets/voice-message.mp3</b> to make it permanent.</p>
+`;
+const qrCard = document.querySelector('.qr-card');
+if (qrCard) qrCard.parentNode.insertBefore(voiceCard, qrCard);
+
+const voiceMessage = document.getElementById('voiceMessage');
+const voiceUpload = document.getElementById('voiceUpload');
+const voiceStatus = document.getElementById('voiceStatus');
+if (voiceUpload) {
+  voiceUpload.addEventListener('change', event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (voiceMessage && voiceMessage.src) URL.revokeObjectURL(voiceMessage.src);
+    if (voiceMessage) {
+      voiceMessage.src = URL.createObjectURL(file);
+      voiceMessage.load();
+    }
+    if (voiceStatus) {
+      voiceStatus.textContent = `Now previewing “${file.name}” on this device. Upload it to assets/voice-message.mp3 to share it with everyone.`;
+    }
+  });
+}
